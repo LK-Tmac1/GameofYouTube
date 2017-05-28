@@ -3,7 +3,7 @@
 	<h1 class="page-header">Video trends</h1>
 	<form role="form" method="post" class="anchor">
 		<div>
-			<input style="width: 300px;" name='videokeyword' type="text"
+			<input style="width: 300px;" name='video_keyword' type="text"
 				placeholder='Search videos by name'>
 			<button type="submit" value='search'>Search</button>
 		</div>
@@ -12,8 +12,7 @@
 	<div class='useractivityfilter'>
 		<form role="form" method='post'>
 			<h2>Select a video</h2>
-			<select style='width: 300' name='videoinfo'> {% for video in
-				videoList%}
+			<select style='width: 300' name='videoinfo'> {% for video in video_list%}
 				<option value="{{ video.videoId +':'+video.title | safe  }}">{{
 					video.title }}</option> {% endfor %}
 			</select>

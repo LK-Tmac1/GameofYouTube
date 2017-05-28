@@ -5,7 +5,7 @@ from kafka.producer import SimpleProducer
 import sys
 
 
-class ActivitySource(object):
+class ActivityProducer(object):
     random_placeholder = "?"
     default_rnd_range_channel = 3
     default_rnd_range_videos = 2
@@ -13,11 +13,11 @@ class ActivitySource(object):
 
     def __init__(self, **kwargs):
         self.args = {k: kwargs[k] for k in kwargs}
-        self.activity = self.args.get("activity", ActivitySource.default_activity)
+        self.activity = self.args.get("activity", ActivityProducer.default_activity)
         self.videos_list = self.args.get("videos_list", [])
         if not self.videos_list:
             self.videos_list = self.args.get("videos", "").split(",")
-        self.rnd_range_videos = self.args.get("rnd_range_videos", ActivitySource.default_rnd_range_videos)
+        self.rnd_range_videos = self.args.get("rnd_range_videos", ActivityProducer.default_rnd_range_videos)
         self.rnd_range_videos = (len(self.videos_list) + 1) * self.rnd_range_videos
         #self.kafka_client = KafkaClient(**kwargs)
         #self.produce = SimpleProducer(self.kafka_client)
@@ -46,79 +46,80 @@ class ActivitySource(object):
         return config
 
     @staticmethod
-    def new_activity(channel=None, video=None, activity=None):
-        channel = channel if channel else ActivitySource.random_placeholder
-        video = video if video else ActivitySource.random_placeholder
-        activity = activity if activity else ActivitySource.default_activity
-        return "%s,%s,%s,%s" % (channel, video, activity, ActivitySource.get_current_time())
+    def format_activity(channel=None, video=None, activity=None):
+        channel = channel if channel else ActivityProducer.random_placeholder
+        video = video if video else ActivityProducer.random_placeholder
+        activity = activity if activity else ActivityProducer.default_activity
+        return "%s,%s,%s,%s" % (channel, video, activity, ActivityProducer.get_current_time())
 
-    def generate(self):
+    def new_activity(self):
         pass
 
-    def produce(self, message):
+    def produce(self):
+        message = self.new_activity()
         self.producer.send_messages(self.activity, str(message).encode('utf-8'))
 
 
-class ChannelSource(ActivitySource):
+class ChannelProducer(ActivityProducer):
 
     def __init__(self, **kwargs):
-        ActivitySource.__init__(self, **kwargs)
+        ActivityProducer.__init__(self, **kwargs)
         self.channel_list = self.args.get("channels", "").split(",")
-        self.rnd_range_channel = self.args.get("rnd_range_channel", ActivitySource.default_rnd_range_channel)
+        self.rnd_range_channel = self.args.get("rnd_range_channel", ActivityProducer.default_rnd_range_channel)
 
 
-class ChannelVideoSource(ActivitySource):
+class ChannelVideoProducer(ActivityProducer):
 
     def __init__(self, **kwargs):
-        ActivitySource.__init__(self, **kwargs)
+        ActivityProducer.__init__(self, **kwargs)
         self.channel_id = self.args.get("channelId", None)
-        self.rnd_range_channel = self.args.get("rnd_range_channel", ActivitySource.default_rnd_range_channel)
+        self.rnd_range_channel = self.args.get("rnd_range_channel", ActivityProducer.default_rnd_range_channel)
 
-    def generate(self):
+    def new_activity(self):
         channel = video = None
         if self.channel_id:
-            channel = ActivitySource.get_random_item(self.channel_id, self.rnd_range_channel)
+            channel = ActivityProducer.get_random_item(self.channel_id, self.rnd_range_channel)
             if channel:  # Random videos belong to this channel
-                video = ActivitySource.get_random_item(self.videos_list)
-        return ActivitySource.new_activity(channel, video, self.activity)
+                video = ActivityProducer.get_random_item(self.videos_list)
+        return ActivityProducer.format_activity(channel, video, self.activity)
 
 
-class VideoSource(ActivitySource):
+class VideoProducer(ActivityProducer):
 
     def __init__(self, **kwargs):
-        ActivitySource.__init__(self, **kwargs)
+        ActivityProducer.__init__(self, **kwargs)
 
-    def generate(self):
+    def new_activity(self):
         video = None
         if len(self.videos_list) > 0:
-            video = ActivitySource.get_random_item(self.videos_list, self.rnd_range_videos)
-        return ActivitySource.new_activity(None, video, self.activity)
+            video = ActivityProducer.get_random_item(self.videos_list, self.rnd_range_videos)
+        return ActivityProducer.format_activity(None, video, self.activity)
 
 
 def test_channel_videos():
     channelId = "1"
     videos_list = range(10)
     batch = 100
-    cs = ChannelVideoSource(channelId=channelId, videos_list=videos_list)
+    cs = ChannelVideoProducer(channelId=channelId, videos_list=videos_list)
     for i in xrange(batch):
-        print cs.generate()
+        print cs.new_activity()
 
 
 def test_videos():
     videos_list = range(10)
     batch = 100
-    video = VideoSource(videos_list=videos_list, activity="like")
+    video = VideoProducer(videos_list=videos_list, activity="like")
     for i in xrange(batch):
-        print video.generate()
+        print video.new_activity()
 
 
 def main():
     arg_list = ['--channelId=', '--activity=', "--rnd_range_channel=", "--rnd_range_videos=", "--videos="]
-    config = ActivitySource.parse_config(arguments=sys.argv)
+    config = ActivityProducer.parse_config(arguments=sys.argv)
     channelId = config.get('channelId', None)
     activity = config.get('activity', 'view')
-    rnd_range_channel = config.get('rnd_range_channel', ActivitySource.default_rnd_range_channel)
-    rnd_range_videos = config.get('rnd_range_videos', ActivitySource.default_rnd_range_videos)
+    rnd_range_channel = config.get('rnd_range_channel', ActivityProducer.default_rnd_range_channel)
+    rnd_range_videos = config.get('rnd_range_videos', ActivityProducer.default_rnd_range_videos)
 
 if __name__ == '__main__':
     test_videos()
