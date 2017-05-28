@@ -6,6 +6,15 @@ class YoutubeClient(object):
     API_ENDPOINT = "https://www.googleapis.com/youtube/v3/"
     API_KEY = ""
 
+    def __init__(self, resource, key=None):
+        if not key:
+            self.key = YoutubeClient.API_KEY
+        self.BASE_URL = "%s%s?key=%s" % (YoutubeClient.API_ENDPOINT, resource, self.key)
+        self.data = ""
+
+    def __repr__(self):
+        return self.BASE_URL
+
     @staticmethod
     def build_url(base_url, filters, part, max_results, page_token):
         target_url = "%s&part=%s" % (base_url, part)
@@ -21,14 +30,14 @@ class YoutubeClient(object):
     def build_filters(**kwargs):
         return {k: kwargs[k] for k in kwargs}
 
-    def __init__(self, resource, key=None):
-        if not key:
-            self.key = YoutubeClient.API_KEY
-        self.BASE_URL = "%s%s?key=%s" % (YoutubeClient.API_ENDPOINT, resource, self.key)
-        self.data = ""
-
-    def __repr__(self):
-        return self.BASE_URL
+    @staticmethod
+    def get_field_recursively(field_list, data):
+        for field in field_list:
+            if field in data:
+                data = data[field]
+            else:
+                break
+        return data
 
     def query(self, part="id", max_results=False, page_token=None, **kwargs):
         filters = YoutubeClient.build_filters(**kwargs)
