@@ -1,0 +1,136 @@
+{% extends "header.html" %} {% block channel %}
+
+<div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
+	<script type="text/javascript">
+		$(document).ready(function() {
+			showChart();
+			showChartAccum();
+			showPieAccum();
+		});
+		
+		function showChart() {
+			$('#container')
+					.highcharts(
+							{
+								title : {
+									text : "Daily statistics"
+								},
+								xAxis : {
+									categories : {{ dateRangeList | safe }}
+								},
+								yAxis : {
+									title : {
+										text : 'Times of {{ useractivity }}'
+									},
+									plotLines : [ {
+										value : 0,
+										width : 1,
+										color : '#808080'
+									} ]
+								},
+								legend : {
+									layout : 'vertical',
+									align : 'right',
+									verticalAlign : 'middle',
+									borderWidth : 0
+								},
+								series: [
+								         {% for val in videoDictList %}
+								             {
+								                 name: "{{ val.name | safe }}",
+								                 data: {{ val.data }}
+								             },
+								         {% endfor %}
+								         ]        
+							});
+		}
+		
+		function showChartAccum() {
+			$('#containerAccum')
+					.highcharts(
+							{
+								title : {
+									text : "Accumulative daily statistics"
+								},
+								xAxis : {
+									categories : {{ dateRangeList | safe }}
+								},
+								yAxis : {
+									title : {
+										text : 'Times of {{ useractivity }}'
+									},
+									plotLines : [ {
+										value : 0,
+										width : 1,
+										color : '#808080'
+									} ]
+								},
+								legend : {
+									layout : 'vertical',
+									align : 'right',
+									verticalAlign : 'middle',
+									borderWidth : 0
+								},
+								series: [
+								         {% for val in videoDictAccumList %}
+								             {
+								                 name: "{{ val.name | safe }}",
+								                 data: {{ val.data | safe }}
+								             },
+								         {% endfor %}
+								         ]        
+							});
+		}
+		
+		function showPieAccum(){
+		    $('#containerPieAccum').highcharts({
+		        chart: {
+		            type: 'pie',
+		            options3d: {
+		                enabled: true,
+		                alpha: 45
+		            }
+		        },
+		        title: {
+		            text: "Top {{ topn }} videos with the most {{ useractivity }} of channel <i>{{ channelTitle | safe }}</i> during last {{ daterange }} days"
+		        },
+		        plotOptions: {
+		            pie: {
+		                innerSize: 100,
+		                depth: 45
+		            }
+		        },
+		        series: [{
+		            name: 'Video weight',
+		            data: {{ videoWeightList | safe }}
+		        }]
+		    });
+		}
+	</script>
+	<div id="containerPieAccum"
+		style="min-width: 310px; height: 400px; margin: 0 auto"></div>
+
+	<br>
+	<div id="container"
+		style="min-width: 310px; height: 400px; margin: 0 auto"></div>
+	<br>
+	<div id="containerAccum"
+		style="min-width: 310px; height: 400px; margin: 0 auto"></div>
+
+
+</div>
+</div>
+</div>
+
+<!-- Bootstrap core JavaScript
+    ================================================== -->
+<!-- Placed at the end of the document so the pages load faster -->
+
+<script src="../static/js/bootstrap/bootstrap.min.js"></script>
+<!-- Just to make our placeholder images work. Don't actually copy the next line! -->
+<script src="../static/js/bootstrap/holder.min.js"></script>
+<!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+<script src="../static/js/bootstrap/ie10-viewport-bug-workaround.js"></script>
+</body>
+</html>
+{% endblock %}
