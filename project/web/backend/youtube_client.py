@@ -28,13 +28,13 @@ class YoutubeClient(object):
         return {k: kwargs[k] for k in kwargs}
 
     @staticmethod
-    def get_field_recursively(field_list, target):
-        for field in field_list:
-            if field in target:
-                target = target[field]
+    def get_field_recursively(target_field_list, dict_data):
+        for field in target_field_list:
+            if field in dict_data:
+                dict_data = dict_data[field]
             else:
-                break
-        return target
+                return None
+        return dict_data
 
     def query(self, **kwargs):
         filters = YoutubeClient.build_filters(**kwargs)
@@ -52,17 +52,19 @@ class SearchClient(YoutubeClient):
     def __init__(self, key):
         YoutubeClient.__init__(self, "search", key=key)
 
-    def search_keyword(self, q, resource_type, **kwargs):
-        return super(SearchClient, self).query(q=q, resource_type=resource_type, **kwargs)
+    def search_keyword(self, q, type, **kwargs):
+        if q and str(q).strip():
+            return super(SearchClient, self).query(q=str(q).strip(), type=type, **kwargs)
+        return None
 
     def search_by_channel(self, channel_id, **kwargs):
         return super(SearchClient, self).query(channelId=channel_id, **kwargs)
 
     def search_video_by_keyword(self, keyword, **kwargs):
-        return self.search_keyword(q=keyword, resource_type="video", **kwargs)
+        return self.search_keyword(q=keyword, type="video", **kwargs)
 
     def search_channel_by_keyword(self, keyword, **kwargs):
-        return self.search_keyword(q=keyword, resource_type="channel", **kwargs)
+        return self.search_keyword(q=keyword, type="channel", **kwargs)
 
 
 class ChannelClient(YoutubeClient):

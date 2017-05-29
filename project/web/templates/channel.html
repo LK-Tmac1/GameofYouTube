@@ -4,7 +4,7 @@
 	<h1 class="page-header">Channel trends</h1>
 	<form role="form" method="post">
 		<div>
-			<input style="width: 300px;" name='channelkeyword' type="text"
+			<input style="width: 300px;" name='channel_keyword' type="text"
 				placeholder='Search channels by name'>
 			<button type="submit" value='search'>Search</button>
 		</div>
@@ -13,10 +13,9 @@
 	<div class='useractivityfilter'>
 		<form role="form" method='post'>
 			<h2>Select a channel</h2>
-			<select style='width: 300' name='channelinfo'> {% for
-				channel in channelList%}
-				<option value="{{channel.channelId+':'+channel.title  }}">{{
-					channel.title }}</option> {% endfor %}
+			<select style='width: 300' name='channelinfo'> {% for channel in channel_list %}
+				<option value="{{channel.channelId+':'+channel.channelTitle  }}">
+					{{ channel.channelTitle }}</option> {% endfor %}
 			</select>
 			<div>
 				<h2 class="sub-header">User activity filter</h2>
