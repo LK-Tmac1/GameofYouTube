@@ -13,19 +13,15 @@ class YoutubeClient(object):
         return self.BASE_URL
 
     @staticmethod
-    def build_url(base_url, filters, part, max_results, page_token):
-        target_url = "%s&part=%s" % (base_url, part)
-        if filters and type(filters) is dict:
-            target_url += "&" + str(urllib.urlencode(filters))
-        if max_results:
-            target_url = target_url + "&max_results=50"
-        if page_token:
-            target_url = target_url + "&page_token=" + page_token
+    def build_url(base_url, **kwargs):
+        target_url = "%s&part=%s" % (base_url, kwargs.pop("part", "id"))
+        if kwargs.pop("max_results", False):
+            target_url += "&max_results=50"
+        if kwargs.get("page_token"):
+            target_url += "&page_token=" + kwargs.pop("page_token")
+        if kwargs:
+            target_url += "&" + str(urllib.urlencode(kwargs))
         return target_url
-
-    @staticmethod
-    def build_filters(**kwargs):
-        return {k: kwargs[k] for k in kwargs}
 
     @staticmethod
     def get_field_recursively(target_field_list, dict_data):
@@ -37,11 +33,7 @@ class YoutubeClient(object):
         return dict_data
 
     def query(self, **kwargs):
-        filters = YoutubeClient.build_filters(**kwargs)
-        part = filters.pop("part") if "part" in filters else "id"
-        max_results = filters.pop("max_results") if "max_results" in filters else False
-        page_token = filters.pop("page_token") if "page_token" in filters else None
-        target_url = YoutubeClient.build_url(self.BASE_URL, filters, part, max_results, page_token)
+        target_url = YoutubeClient.build_url(self.BASE_URL, **kwargs)
         req = requests.get(target_url)
         if req.status_code == 200:
             return json.loads(req.text)
