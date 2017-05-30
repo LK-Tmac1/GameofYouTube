@@ -14,7 +14,7 @@
 		<form role="form" method='post'>
 			<h2>Select a channel</h2>
 			<select style='width: 300' name='channelinfo'> {% for channel in channel_list %}
-				<option value="{{channel.channelId+':'+channel.channelTitle  }}">
+				<option value="{{channel.channelId}}">
 					{{ channel.channelTitle }}</option> {% endfor %}
 			</select>
 			<div>

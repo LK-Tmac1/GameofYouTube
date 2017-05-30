@@ -12,21 +12,20 @@
 	<div class='useractivityfilter'>
 		<form role="form" method='post'>
 			<h2>Select a video</h2>
-			<select style='width: 300' name='videoinfo'> {% for video in video_list%}
+			<select style='width: 300' name='video_info'> {% for video in video_list%}
 				<option value="{{ video.videoId +':'+video.title | safe  }}">{{
 					video.title }}</option> {% endfor %}
 			</select>
 			<div>
 				<h2 class="sub-header">User activity filter</h2>
-				<select name='datetimerange'>
-					<option value='3'>Last 3</option>
-					<option value='5'>Last 5</option>
-					<option value='10'>Last 10</option>
-					<option value='24'>Last 24</option>
+				<select name='perseconds'>
+					<option value='10'>10</option>
+					<option value='30'>30</option>
+					<option value='60'>60</option>
 				</select> &nbsp;&nbsp;<select name='mode'>
 					<option value='_hourly'>Hourly</option>
 					<option value='_daily'>Daily</option>
-				</select> &nbsp;&nbsp;<select name='activitytype'>
+				</select> &nbsp;&nbsp;<select name='activity'>
 					<option value='userview'>View</option>
 					<option value='userlike'>Like</option>
 					<option value='usercomment'>Comment</option>
