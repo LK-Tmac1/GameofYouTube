@@ -1,27 +1,93 @@
 from random import randint
-from datetime import datetime
 from kafka.client import KafkaClient
 from kafka.producer import SimpleProducer
-import time
+from utility import parse_main_arguments, prepare_field, is_path_existed, get_current_time
+import time, sys, os
 
 random_placeholder = "?"
 default_rnd_seed_channel = 3
 default_rnd_seed_video = 2
 default_activity = "view"
-default_produce_tempo = 0
+default_produce_tempo = 1
 
 
 class ActivityProducer(object):
     def __init__(self, **kwargs):
-        self.activity = ActivityProducer.prepare_field("activity", kwargs, default_activity)
-        self.videos_list = ActivityProducer.prepare_field("videos", kwargs, [])
+        self.produce_tempo = float(prepare_field("tempo", kwargs, default_produce_tempo))
+        self.source = kwargs["source"]
+
+    def __repr__(self):
+        return "%s, tempo=%s, source=%s" % (self.__class__.__name__, self.produce_tempo, self.source)
+
+    @staticmethod
+    def build_producer(source, **kwargs):
+        mode = kwargs.get("producer", "file")
+        if mode == "file":
+            return ActivityFileProducer(source=source, **kwargs)
+        elif mode == "kafka":
+            return ActivityKafkaProducer(source=source, **kwargs)
+        return None
+
+    def produce(self):
+        self.new_message()
+        if self.produce_tempo:
+            time.sleep(self.produce_tempo)
+
+
+class ActivityKafkaProducer(ActivityProducer):
+    def __init__(self, **kwargs):
+        ActivityProducer.__init__(self, **kwargs)
+        self.kafka_client = KafkaClient(**kwargs)
+        self.producer = SimpleProducer(self.kafka_client)
+
+    def new_message(self):
+        while True:
+            message = self.source.new_activity()
+            self.producer.send_messages(self.source.activity, message)
+
+
+class ActivityFileProducer(ActivityProducer):
+    def __init__(self, **kwargs):
+        ActivityProducer.__init__(self, **kwargs)
+        self.output_path = kwargs["output_path"]
+        self.write_mode = prepare_field("write_mode", kwargs, "w")
+        self.output_mode = prepare_field("output_mode", kwargs, "d")
+
+    @staticmethod
+    def write_local_file(output_path, content, write_mode):
+        parent_dir = output_path[0:output_path.rfind("/")]
+        # If output parent dir does not exist, create it
+        if not is_path_existed(parent_dir):
+            os.makedirs(parent_dir)
+        with open(output_path, write_mode) as output:
+            output.write(content+"\n")
+            output.close()
+
+    @staticmethod
+    def write_local_path(output_dir, content, file_name, write_mode):
+        if output_dir[-1] != "/":
+            output_dir += "/"
+        output_path = output_dir + file_name
+        ActivityFileProducer.write_local_file(output_path, content, write_mode)
+
+    def new_message(self):
+        while True:
+            message = self.source.new_activity()
+            if self.output_mode == "d":
+                file_name = get_current_time()
+                ActivityFileProducer.write_local_path(self.output_path, message, file_name, self.write_mode)
+            else:
+                ActivityFileProducer.write_local_file(self.output_path, message, self.write_mode)
+
+
+class ActivitySource(object):
+    def __init__(self, **kwargs):
+        self.activity = prepare_field("activity", kwargs, default_activity)
+        self.videos_list = prepare_field("videos", kwargs, [])
         if self.videos_list:
             self.videos_list = self.videos_list.split(",")
-        self.rnd_seed_video = ActivityProducer.prepare_field("rnd_seed_video", kwargs, default_rnd_seed_video)
+        self.rnd_seed_video = prepare_field("rnd_seed_video", kwargs, default_rnd_seed_video)
         self.rnd_seed_video = len(self.videos_list) * self.rnd_seed_video + 1
-        self.produce_tempo = float(ActivityProducer.prepare_field("tempo", kwargs, default_produce_tempo))
-        #self.kafka_client = KafkaClient(**kwargs)
-        #self.produce = SimpleProducer(self.kafka_client)
 
     def __repr__(self):
         class_name = self.__class__.__name__
@@ -41,84 +107,72 @@ class ActivityProducer(object):
         return None
 
     @staticmethod
-    def get_current_time():
-        return str(datetime.now())[:-7]
-
-    @staticmethod
     def format_activity(channel=None, video=None, activity=None):
         channel = channel if channel else random_placeholder
         video = video if video else random_placeholder
         activity = activity if activity else default_activity
-        return "%s,%s,%s,%s" % (channel, video, activity, ActivityProducer.get_current_time())
+        return "%s,%s,%s,%s" % (channel, video, activity, get_current_time())
 
     @staticmethod
-    def build_producer(config):
-        mode = ActivityProducer.prepare_field("mode", config, "video")
-        c = config.get('channelId')
-        a = config.get('activity')
-        rc = config.get('rnd_seed_channel')
-        rv = config.get('rnd_seed_video')
-        v = config.get("videos")
-        t = config.get("tempo")
+    def build_source(**kwargs):
+        mode = kwargs.get("mode", "video")
         if mode == "video":
-            return VideoProducer(activity=a, rnd_range_videos=rv, videos=v, tempo=t)
-        if mode == "channel_video":
-            return ChannelVideoProducer(channelId=c, activity=a, rnd_range_channel=rc, rnd_range_videos=rv, videos=v, tempo=t)
+            return VideoSource(**kwargs)
+        elif mode == "channel_video":
+            return ChannelVideoSource(**kwargs)
+        elif mode == "channel":
+            return ChannelSource(**kwargs)
         return None
-
-    @staticmethod
-    def prepare_field(arg, arguments, default=None):
-        if arg in arguments and arguments.get(arg):
-            return arguments.pop(arg)
-        return default
 
     def new_activity(self):
         return ""
 
-    def produce(self):
-        while True:
-            message = self.new_activity()
-            # self.producer.send_messages(self.activity, message)
-            print message
-            if self.produce_tempo:
-                time.sleep(self.produce_tempo)
 
-
-class ChannelVideoProducer(ActivityProducer):
+class ChannelVideoSource(ActivitySource):
     # Only videos belong to a given channel
     def __init__(self, **kwargs):
-        ActivityProducer.__init__(self, **kwargs)
-        self.channel_id = ActivityProducer.prepare_field("channelId", kwargs, None)
-        self.rnd_range_channel = ActivityProducer.prepare_field("rnd_seed_channel", kwargs, default_rnd_seed_channel)
+        ActivitySource.__init__(self, **kwargs)
+        self.channel_id = prepare_field("channelId", kwargs, None)
+        self.rnd_range_channel = prepare_field("rnd_seed_channel", kwargs, default_rnd_seed_channel)
+
+    def __repr__(self):
+        return "%s\nChannelId=%s %s" % (ActivitySource.__repr__(self), self.channel_id, self.rnd_range_channel)
 
     def new_activity(self):
         channel = video = None
         if self.channel_id:
-            channel = ActivityProducer.get_random_item(self.channel_id, self.rnd_range_channel)
+            channel = ActivitySource.get_random_item(self.channel_id, self.rnd_range_channel)
             if channel:  # Random videos belong to this channel
-                video = ActivityProducer.get_random_item(self.videos_list)
-        return ActivityProducer.format_activity(channel, video, self.activity)
+                video = ActivitySource.get_random_item(self.videos_list)
+        return ActivitySource.format_activity(channel, video, self.activity)
 
 
-class VideoProducer(ActivityProducer):
+class VideoSource(ActivitySource):
     # Only video user activity, no channel info
     def __init__(self, **kwargs):
-        ActivityProducer.__init__(self, **kwargs)
+        ActivitySource.__init__(self, **kwargs)
 
     def new_activity(self):
-        video = ActivityProducer.get_random_item(self.videos_list, self.rnd_seed_video)
-        return ActivityProducer.format_activity(None, video, self.activity)
+        video = ActivitySource.get_random_item(self.videos_list, self.rnd_seed_video)
+        return ActivitySource.format_activity(None, video, self.activity)
 
 
-class ChannelProducer(ActivityProducer):
+class ChannelSource(ActivitySource):
     # Only channel user activity, no video info
     def __init__(self, **kwargs):
-        ActivityProducer.__init__(self, **kwargs)
-        self.channel_list = ActivityProducer.prepare_field("channels", kwargs, [])
+        ActivitySource.__init__(self, **kwargs)
+        self.channel_list = prepare_field("channels", kwargs, [])
         if self.channel_list:
             self.channel_list = self.channel_list.split(",")
-        self.rnd_seed_channel =  ActivityProducer.prepare_field("rnd_seed_channel", kwargs, default_rnd_seed_channel)
+        self.rnd_seed_channel = prepare_field("rnd_seed_channel", kwargs, default_rnd_seed_channel)
 
     def new_activity(self):
-        channel = ActivityProducer.get_random_item(self.channel_list, self.rnd_seed_channel)
-        return ActivityProducer.format_activity(None, channel, self.activity)
+        channel = ActivitySource.get_random_item(self.channel_list, self.rnd_seed_channel)
+        return ActivitySource.format_activity(None, channel, self.activity)
+
+
+if __name__ == '__main__':
+    config = parse_main_arguments(sys.argv)
+    activity_source = ActivitySource.build_source(**config)
+    producer = ActivityProducer.build_producer(source=activity_source, **config)
+    producer.produce()

@@ -1,4 +1,5 @@
 import requests, yaml, os
+from datetime import datetime
 
 
 def parse_main_arguments(arguments):
@@ -29,3 +30,13 @@ def read_file(file_path, is_yml, is_url=False, lines=False):
         if lines and content:
             content = content.split("\n")
     return content
+
+
+def prepare_field(arg, arguments, default=None):
+    if arg in arguments and arguments.get(arg):
+        return arguments.pop(arg)
+    return default
+
+
+def get_current_time():
+    return str(datetime.now())[:-7]

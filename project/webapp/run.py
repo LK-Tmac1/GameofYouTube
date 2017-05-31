@@ -3,7 +3,8 @@ from flask.globals import request
 from backend.youtube import SearchClient
 from backend.entity import Video, Channel
 from backend.utility import parse_main_arguments, read_file
-import sys, subprocess
+from backend.service import ProducerService, SparkService
+import sys
 
 app = Flask(__name__)
 config_path = None
@@ -30,12 +31,19 @@ def video_search():
         return render_template("video.html", video_list=video_list)
     elif "video_info" in request.form:
         video_info = request.form.getlist("video_info")[0]
-        video_id = video_info[0:video_info.rfind(':')]
-        video_title = video_info[video_info.rfind(':') + 1:len(video_info)]
-        activity = str(request.form["activity"])
-        cmd = "python ./main.py --mode=video --videos=%s --activity=%s --config_path=%s" % (video_id, activity, config_path)
-        cmd = "spark-submit --class abc --kafka-topic=%s --runsum=false --seconds=10 --config_path=%s <path to jar file>"
-        subprocess.Popen(cmd.split(" "))
+        video_info = video_info.split(":")
+        video_id = video_info[0]
+        channel_id = video_info[1]
+        activity = request.form["activity"]
+        spark_service = SparkService()
+        #producer_service = ProducerService(channelId=channel_id, mode="video", videos=video_id, activity=activity)
+        producer_service = ProducerService()
+        producer_service.add_argument_pair(producer="file", output_path="/Users/kunliu/Desktop/test")
+        producer_service.add_argument_pair(channelId=channel_id, mode="channel_video")
+        producer_service.add_argument_pair(videos=video_id+",1,2,3,4,5")
+        producer_service.add_argument_pair(activity=activity, write_mode="a",output_mode="d")
+        producer_service.start()
+        print producer_service.PID
         return render_template("video.html")
 
 

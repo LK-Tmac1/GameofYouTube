@@ -1,5 +1,5 @@
 {% extends "header.html" %} {% block video %}
-<div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 build_producer">
+<div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 build_source">
 	<h1 class="page-header">Video trends</h1>
 	<form role="form" method="post" class="anchor">
 		<div>
@@ -13,7 +13,7 @@
 		<form role="form" method='post'>
 			<h2>Select a video</h2>
 			<select style='width: 300' name='video_info'> {% for video in video_list%}
-				<option value="{{ video.videoId +':'+video.title | safe  }}">{{
+				<option value="{{ video.videoId +':'+video.channelId }}">{{
 					video.title }}</option> {% endfor %}
 			</select>
 			<div>
@@ -26,11 +26,11 @@
 					<option value='_hourly'>Hourly</option>
 					<option value='_daily'>Daily</option>
 				</select> &nbsp;&nbsp;<select name='activity'>
-					<option value='userview'>View</option>
-					<option value='userlike'>Like</option>
-					<option value='usercomment'>Comment</option>
-					<option value='usershare'>Share</option>
-					<option value='usersubscribe'>Subscribe</option>
+					<option value='view'>View</option>
+					<option value='like'>Like</option>
+					<option value='commend'>Comment</option>
+					<option value='share'>Share</option>
+					<option value='subscribe'>Subscribe</option>
 				</select>&nbsp;&nbsp;
 				<button type="submit" value='submit'>Submit</button>
 			</div>
