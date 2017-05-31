@@ -7,7 +7,6 @@ class YoutubeClient(object):
 
     def __init__(self, resource, key):
         self.BASE_URL = "%s%s?key=%s" % (YoutubeClient.API_ENDPOINT, resource, key)
-        self.data = None
 
     def __repr__(self):
         return self.BASE_URL

@@ -4,23 +4,20 @@ from kafka.producer import SimpleProducer
 from utility import parse_main_arguments, prepare_field, is_path_existed, get_current_time
 import time, sys, os
 
-random_placeholder = "?"
-default_rnd_seed_channel = 3
-default_rnd_seed_video = 2
-default_activity = "view"
-default_produce_tempo = 1
-
 
 class ActivityProducer(object):
+    default_produce_tempo = 1
+
     def __init__(self, **kwargs):
-        self.produce_tempo = float(prepare_field("tempo", kwargs, default_produce_tempo))
+        self.produce_tempo = float(prepare_field("tempo", kwargs, ActivityProducer.default_produce_tempo))
         self.source = kwargs["source"]
 
     def __repr__(self):
         return "%s, tempo=%s, source=%s" % (self.__class__.__name__, self.produce_tempo, self.source)
 
     @staticmethod
-    def build_producer(source, **kwargs):
+    def build_producer(**kwargs):
+        source = ActivitySource.build_source(**config)
         mode = kwargs.get("producer", "file")
         if mode == "file":
             return ActivityFileProducer(source=source, **kwargs)
@@ -81,12 +78,17 @@ class ActivityFileProducer(ActivityProducer):
 
 
 class ActivitySource(object):
+    random_placeholder = "?"
+    default_rnd_seed_channel = 3
+    default_rnd_seed_video = 2
+    default_activity = "view"
+
     def __init__(self, **kwargs):
-        self.activity = prepare_field("activity", kwargs, default_activity)
+        self.activity = prepare_field("activity", kwargs, ActivitySource.default_activity)
         self.videos_list = prepare_field("videos", kwargs, [])
         if self.videos_list:
             self.videos_list = self.videos_list.split(",")
-        self.rnd_seed_video = prepare_field("rnd_seed_video", kwargs, default_rnd_seed_video)
+        self.rnd_seed_video = prepare_field("rnd_seed_video", kwargs, ActivitySource.default_rnd_seed_video)
         self.rnd_seed_video = len(self.videos_list) * self.rnd_seed_video + 1
 
     def __repr__(self):
@@ -108,9 +110,9 @@ class ActivitySource(object):
 
     @staticmethod
     def format_activity(channel=None, video=None, activity=None):
-        channel = channel if channel else random_placeholder
-        video = video if video else random_placeholder
-        activity = activity if activity else default_activity
+        channel = channel if channel else ActivitySource.random_placeholder
+        video = video if video else ActivitySource.random_placeholder
+        activity = activity if activity else ActivitySource.default_activity
         return "%s,%s,%s,%s" % (channel, video, activity, get_current_time())
 
     @staticmethod
@@ -133,7 +135,7 @@ class ChannelVideoSource(ActivitySource):
     def __init__(self, **kwargs):
         ActivitySource.__init__(self, **kwargs)
         self.channel_id = prepare_field("channelId", kwargs, None)
-        self.rnd_range_channel = prepare_field("rnd_seed_channel", kwargs, default_rnd_seed_channel)
+        self.rnd_range_channel = prepare_field("rnd_seed_channel", kwargs, ActivitySource.default_rnd_seed_channel)
 
     def __repr__(self):
         return "%s\nChannelId=%s %s" % (ActivitySource.__repr__(self), self.channel_id, self.rnd_range_channel)
@@ -173,6 +175,5 @@ class ChannelSource(ActivitySource):
 
 if __name__ == '__main__':
     config = parse_main_arguments(sys.argv)
-    activity_source = ActivitySource.build_source(**config)
-    producer = ActivityProducer.build_producer(source=activity_source, **config)
+    producer = ActivityProducer.build_producer(**config)
     producer.produce()

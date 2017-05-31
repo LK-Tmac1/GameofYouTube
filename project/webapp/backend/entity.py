@@ -1,3 +1,4 @@
+
 class BaseEntity(object):
     publishedAt = ""
     channelId = ""
