@@ -1,8 +1,9 @@
-import subprocess, os
+import subprocess
+from utility import get_current_file_dir
 
 
 class Service(object):
-    cwd = os.path.dirname(os.path.realpath(__file__))
+    cwd = get_current_file_dir(__file__)
 
     def __init__(self, program_path=None, **kwargs):
         self.service_name = self.__class__.__name__

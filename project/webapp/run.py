@@ -5,8 +5,6 @@ from backend.handler import RequestHandler
 import sys
 
 app = Flask(__name__)
-config_path = None
-request_handler = None
 
 
 @app.route('/video')
@@ -39,7 +37,7 @@ def channel():
 @app.route('/channel', methods=['POST'])
 @app.route('/channel_stream', methods=['POST'])
 def channel_search():
-    channel_list = request_handler.channel_search(request.form)
+    channel_list = RequestHandler.channel_search(request.form)
     return render_template("channel.html", title="Channel", channel_list=channel_list)
 
 
@@ -51,5 +49,5 @@ if __name__ == '__main__':
         exit(1)
     config_path = parse_main_arguments(sys.argv).get("config_path")
     config = read_file(file_path=config_path, is_yml=True)
-    request_handler = RequestHandler(config)
+    RequestHandler.initialize(config)
     app.run(host='0.0.0.0', port=config["flask"]["port"], debug=True)

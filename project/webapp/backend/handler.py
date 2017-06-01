@@ -7,7 +7,8 @@ class RequestHandler(object):
     # Utility class that handles requests from HTTP server
     search_client = None
 
-    def __init__(self, config):
+    @staticmethod
+    def initialize(config):
         if RequestHandler.search_client is None:
             RequestHandler.search_client = SearchClient(key=config["youtube"]["api_key"])
 
@@ -37,4 +38,3 @@ class RequestHandler(object):
         producer_service.add_argument_pair(activity=activity, write_mode="a",output_mode="d")
         producer_service.start()
         print producer_service.PID
-

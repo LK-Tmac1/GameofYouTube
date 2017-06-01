@@ -40,3 +40,7 @@ def prepare_field(arg, arguments, default=None):
 
 def get_current_time():
     return str(datetime.now())[:-7]
+
+
+def get_current_file_dir(file):
+    return os.path.dirname(os.path.realpath(file))
