@@ -43,7 +43,7 @@ def channel_search():
 
 if __name__ == '__main__':
     arguments = sys.argv
-    arguments.append("--config_path=/Users/kunliu/git/youtubetrends/project/config.yml")
+    arguments.append("--config_path=../config.yml")
     if len(sys.argv) <= 1:
         print "Need to specify --config_path=<path to yaml config file>"
         exit(1)
