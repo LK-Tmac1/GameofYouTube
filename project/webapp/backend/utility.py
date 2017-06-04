@@ -32,7 +32,7 @@ def read_file(file_path, is_yml, is_url=False, lines=False):
     return content
 
 
-def prepare_field(arg, arguments, default=None):
+def pop_argument(arg, arguments, default=None):
     if arg in arguments and arguments.get(arg):
         return arguments.pop(arg)
     return default

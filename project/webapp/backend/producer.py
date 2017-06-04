@@ -1,7 +1,6 @@
 from random import randint
-from kafka.client import KafkaClient
-from kafka.producer import SimpleProducer
-from utility import parse_main_arguments, prepare_field, is_path_existed, get_current_time
+from kafka import KafkaProducer
+from utility import parse_main_arguments, pop_argument, is_path_existed, get_current_time
 import time, sys, os
 
 
@@ -9,23 +8,26 @@ class ActivityProducer(object):
     default_produce_tempo = 1
 
     def __init__(self, **kwargs):
-        self.produce_tempo = float(prepare_field("tempo", kwargs, ActivityProducer.default_produce_tempo))
-        self.source = kwargs["source"]
+        self.produce_tempo = float(pop_argument("tempo", kwargs, ActivityProducer.default_produce_tempo))
+        self.source = pop_argument("source", kwargs, None)
 
     def __repr__(self):
         return "%s, tempo=%s, source=%s" % (self.__class__.__name__, self.produce_tempo, self.source)
 
     @staticmethod
     def build_producer(**kwargs):
-        source = ActivitySource.build_source(**config)
-        mode = kwargs.get("producer", "file")
-        if mode == "file":
+        source = ActivitySource.build_source(**kwargs)
+        producer = pop_argument("producer", kwargs, "file")
+        if producer == "file":
             return ActivityFileProducer(source=source, **kwargs)
-        elif mode == "kafka":
+        elif producer == "kafka":
             return ActivityKafkaProducer(source=source, **kwargs)
         return None
 
     def produce(self):
+        if self.source is None:
+            print "Not able to build an activity source by parameters provided."
+            sys.exit(-1)
         self.new_message()
         if self.produce_tempo:
             time.sleep(self.produce_tempo)
@@ -34,21 +36,27 @@ class ActivityProducer(object):
 class ActivityKafkaProducer(ActivityProducer):
     def __init__(self, **kwargs):
         ActivityProducer.__init__(self, **kwargs)
-        self.kafka_client = KafkaClient(**kwargs)
-        self.producer = SimpleProducer(self.kafka_client)
+        pop_config_list = list([])
+        for k in kwargs:
+            if k not in KafkaProducer.DEFAULT_CONFIG:
+                pop_config_list.append(k)
+        for k in pop_config_list:
+            kwargs.pop(k)
+        kwargs["api_version"]=(0, 10)
+        self.producer = KafkaProducer(**kwargs)
 
     def new_message(self):
         while True:
             message = self.source.new_activity()
-            self.producer.send_messages(self.source.activity, message)
+            self.producer.send(topic=self.source.activity, value=message)
 
 
 class ActivityFileProducer(ActivityProducer):
     def __init__(self, **kwargs):
         ActivityProducer.__init__(self, **kwargs)
-        self.output_path = kwargs["output_path"]
-        self.write_mode = prepare_field("write_mode", kwargs, "w")
-        self.output_mode = prepare_field("output_mode", kwargs, "d")
+        self.output_path = pop_argument("output_path", kwargs, "./test-output")
+        self.write_mode = pop_argument("write_mode", kwargs, "w")
+        self.output_mode = pop_argument("output_mode", kwargs, "d")
 
     @staticmethod
     def write_local_file(output_path, content, write_mode):
@@ -84,17 +92,12 @@ class ActivitySource(object):
     default_activity = "view"
 
     def __init__(self, **kwargs):
-        self.activity = prepare_field("activity", kwargs, ActivitySource.default_activity)
-        self.videos_list = prepare_field("videos", kwargs, [])
+        self.activity = pop_argument("activity", kwargs, ActivitySource.default_activity)
+        self.videos_list = pop_argument("videos", kwargs, [])
         if self.videos_list:
             self.videos_list = self.videos_list.split(",")
-        self.rnd_seed_video = prepare_field("rnd_seed_video", kwargs, ActivitySource.default_rnd_seed_video)
+        self.rnd_seed_video = pop_argument("rnd_seed_video", kwargs, ActivitySource.default_rnd_seed_video)
         self.rnd_seed_video = len(self.videos_list) * self.rnd_seed_video + 1
-
-    def __repr__(self):
-        class_name = self.__class__.__name__
-        videos = ",".join(self.videos_list)
-        return "%s %s %s %s %s %s" % (class_name, self.activity, videos, self.rnd_seed_video, self.produce_tempo)
 
     @staticmethod
     def get_random_item(items, rnd_seed=None):
@@ -117,7 +120,7 @@ class ActivitySource(object):
 
     @staticmethod
     def build_source(**kwargs):
-        mode = kwargs.get("mode", "video")
+        mode = pop_argument("source_mode", kwargs, "video")
         if mode == "video":
             return VideoSource(**kwargs)
         elif mode == "channel_video":
@@ -134,8 +137,8 @@ class ChannelVideoSource(ActivitySource):
     # Only videos belong to a given channel
     def __init__(self, **kwargs):
         ActivitySource.__init__(self, **kwargs)
-        self.channel_id = prepare_field("channelId", kwargs, None)
-        self.rnd_range_channel = prepare_field("rnd_seed_channel", kwargs, ActivitySource.default_rnd_seed_channel)
+        self.channel_id = pop_argument("channelId", kwargs, None)
+        self.rnd_range_channel = pop_argument("rnd_seed_channel", kwargs, ActivitySource.default_rnd_seed_channel)
 
     def __repr__(self):
         return "%s\nChannelId=%s %s" % (ActivitySource.__repr__(self), self.channel_id, self.rnd_range_channel)
@@ -163,10 +166,10 @@ class ChannelSource(ActivitySource):
     # Only channel user activity, no video info
     def __init__(self, **kwargs):
         ActivitySource.__init__(self, **kwargs)
-        self.channel_list = prepare_field("channels", kwargs, [])
+        self.channel_list = pop_argument("channels", kwargs, [])
         if self.channel_list:
             self.channel_list = self.channel_list.split(",")
-        self.rnd_seed_channel = prepare_field("rnd_seed_channel", kwargs, default_rnd_seed_channel)
+        self.rnd_seed_channel = pop_argument("rnd_seed_channel", kwargs, ActivitySource.default_rnd_seed_channel)
 
     def new_activity(self):
         channel = ActivitySource.get_random_item(self.channel_list, self.rnd_seed_channel)
