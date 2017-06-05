@@ -48,6 +48,7 @@ class ActivityKafkaProducer(ActivityProducer):
     def new_message(self):
         while True:
             message = self.source.new_activity()
+            print self.source.activity, message
             self.producer.send(topic=self.source.activity, value=message)
 
 
