@@ -7,7 +7,7 @@ nohup bin/kafka-server-start.sh config/server.properties &
 # Create a kafka topic
 # Ensure replication factor no larger than available brokers
 cd /usr/iop/current/kafka-broker/
-bin/kafka-topics.sh --create --replication-factor 2  --partition 3 --topic video \
+bin/kafka-topics.sh --create --replication-factor 2  --partition 3 --topic view \
 --zookeeper kunliu1.fyre.ibm.com:2181,kunliu10.fyre.ibm.com:2181,kunliu2.fyre.ibm.com:2181
 # Successful message: Created topic "user-behavior-topic".
 
@@ -19,5 +19,8 @@ bin/kafka-console-consumer.sh --bootstrap-server kunliu1.fyre.ibm.com:6667 --top
 # Using the ConsoleConsumer with old consumer is deprecated and will be removed in a future major release.
 # Consider using the new consumer by passing [bootstrap-server] instead of [zookeeper].
 
-
-producer.py --producer=kafka --source_mode=video --videos=1,2,3,4,5 --bootstrap_servers=kunliu1.fyre.ibm.com:6667 --max_block_ms=1000
+# run producer.py
+python producer.py \
+	--producer=kafka --source_mode=video \
+	--videos=1,2,3,4,5 --bootstrap_servers=kunliu1.fyre.ibm.com:6667 \
+	--max_block_ms=1000 --tempo=1 --activity=like
