@@ -24,7 +24,7 @@ def video_search():
         video_list = RequestHandler.video_search(form=request.form)
         return render_template("video.html", video_list=video_list)
     elif "video_info" in request.form:
-        RequestHandler.start_spark_streaming(form=request.form)
+        RequestHandler.start_producer(form=request.form)
         return render_template("video.html")
 
 
