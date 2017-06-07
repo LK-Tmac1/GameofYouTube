@@ -1,0 +1,52 @@
+{% extends "header.html" %} {% block video %}
+<div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 build_source">
+	<h1 class="page-header">Video trends</h1>
+	<form role="form" method="post" class="anchor">
+		<div>
+			<input style="width: 300px;" name='video_keyword' type="text"
+				placeholder='Search videos by name'>
+			<button type="submit" value='search'>Search</button>
+		</div>
+	</form>
+
+	<div class='useractivityfilter'>
+		<form role="form" method='post'>
+			<h2>Select a video</h2>
+			<select style='width: 300' name='video_info'> {% for video in video_list%}
+				<option value="{{ video.videoId +':'+video.channelId }}">{{
+					video.title }}</option> {% endfor %}
+			</select>
+			<div>
+				<h2 class="sub-header">User activity filter</h2>
+				<select name='perseconds'>
+					<option value='10'>10</option>
+					<option value='30'>30</option>
+					<option value='60'>60</option>
+				</select> &nbsp;&nbsp;<select name='mode'>
+					<option value='_hourly'>Hourly</option>
+					<option value='_daily'>Daily</option>
+				</select> &nbsp;&nbsp;<select name='activity'>
+					<option value='view'>View</option>
+					<option value='like'>Like</option>
+					<option value='commend'>Comment</option>
+					<option value='share'>Share</option>
+					<option value='subscribe'>Subscribe</option>
+				</select>&nbsp;&nbsp;
+				<button type="submit" value='submit'>Submit</button>
+			</div>
+		</form>
+	</div>
+
+
+</div>
+</div>
+</div>
+
+<script src="../static/js/bootstrap/bootstrap.min.js"></script>
+<!-- Just to make our placeholder images work. Don't actually copy the next line! -->
+<script src="../static/js/bootstrap/holder.min.js"></script>
+<!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+<script src="../static/js/bootstrap/ie10-viewport-bug-workaround.js"></script>
+</body>
+</html>
+{% endblock %}

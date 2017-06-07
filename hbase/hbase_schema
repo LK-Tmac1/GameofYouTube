@@ -1,0 +1,10 @@
+create 'youtube', {NAME => 'userview_daily'},{NAME => 'userview_daily_accum'},
+{NAME => 'userview_hourly'},{NAME => 'userview_hourly_accum'},
+{NAME => 'userlike_daily'},{NAME => 'userlike_daily_accum'},
+{NAME => 'userlike_hourly'},{NAME => 'userlike_hourly_accum'},
+{NAME => 'usercomment_daily'},{NAME => 'usercomment_daily_accum'},
+{NAME => 'usercomment_hourly'},{NAME => 'usercomment_hourly_accum'},
+{NAME => 'usershare_daily'},{NAME => 'usershare_daily_accum'},
+{NAME => 'usershare_hourly'},{NAME => 'usershare_hourly_accum'},
+{NAME => 'usersubscribe_daily'},{NAME => 'usersubscribe_daily_accum'},
+{NAME => 'usersubscribe_hourly'},{NAME => 'usersubscribe_hourly_accum'}

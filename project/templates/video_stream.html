@@ -1,0 +1,46 @@
+{% extends "header.html" %} {% block video %}
+<div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 build_source">
+	<h1 class="page-header">Video Stream</h1>
+	<form role="form" method="post" class="anchor">
+		<div>
+			<input style="width: 300px;" name='video_keyword' type="text"
+				placeholder='Search videos by name'>
+			<button type="submit" value='search'>Search</button>
+		</div>
+	</form>
+
+	<div class='useractivityfilter'>
+		<form role="form" method='post'>
+			<h2>Select a video</h2>
+			<select style='width: 300' name='videoinfo'> {% for video in
+				videoList%}
+				<option value="{{ video.videoId }}">{{
+					video.title }}</option> {% endfor %}
+			</select>
+			<div>
+				<h2 class="sub-header">User activity filter</h2>
+				<select name='activitytype'>
+					<option value='userview'>View</option>
+					<option value='userlike'>Like</option>
+					<option value='usercomment'>Comment</option>
+					<option value='usershare'>Share</option>
+					<option value='usersubscribe'>Subscribe</option>
+				</select>&nbsp;&nbsp;
+				<button type="submit" value='submit'>Submit</button>
+			</div>
+		</form>
+	</div>
+
+
+</div>
+</div>
+</div>
+
+<script src="../static/js/bootstrap/bootstrap.min.js"></script>
+<!-- Just to make our placeholder images work. Don't actually copy the next line! -->
+<script src="../static/js/bootstrap/holder.min.js"></script>
+<!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+<script src="../static/js/bootstrap/ie10-viewport-bug-workaround.js"></script>
+</body>
+</html>
+{% endblock %}
