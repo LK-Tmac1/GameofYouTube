@@ -49,7 +49,7 @@ class ActivityKafkaProducer(ActivityProducer):
 
     def new_message(self):
         message = self.source.new_activity()
-        print self.source.activity, message
+        print message
         self.producer.send(topic=self.source.activity, value=message)
 
 

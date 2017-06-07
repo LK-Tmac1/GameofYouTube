@@ -4,5 +4,5 @@ yum install python-pip -y
 
 yum install openssl openssl-devel -y
 
-pip install flask
+pip install kafka-python flask pyyaml
 
